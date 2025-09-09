@@ -4,29 +4,29 @@ from email.header import decode_header
 import webbrowser
 import os
 
+import imaplib
+from imaplib import IMAP4_SSL
+
 # account credentials
-username = ""
-password = ""
+# Todo: Use env for this
 # use your email provider's IMAP server, you can look for your provider's IMAP server on Google
 # or check this page: https://www.systoolsgroup.com/imap/
 # for office 365, it's this:
 # imap_server = "imap://aaronwey%40posteo.de@posteo.de/INBOX"
 imap_server = "posteo.de"
 
-
-imap = imaplib.IMAP4_SSL(imap_server)
-imap.login(username, password)
-
-from imaplib import IMAP4_SSL
-
+total_messages = 500
 with IMAP4_SSL("posteo.de") as inbox:
     inbox.login(username, password)
     status, messages = inbox.select("endof10")
+    messages = int(messages[0])
+
+    for i in range(1, messages):
+        # fetch the email message by ID
+        res, msg = inbox.fetch(str(i), "(RFC822)")
+        print(i, msg[0:10])
 exit()
 
-N = 30
-# total number of emails
-messages = int(messages[0])
 for i in range(1, messages):
     # fetch the email message by ID
     res, msg = imap.fetch(str(i), "(RFC822)")
