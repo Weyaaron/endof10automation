@@ -1,11 +1,7 @@
-import imaplib
 import email
-from email.header import decode_header
-import webbrowser
-import os
-
-import imaplib
 from imaplib import IMAP4_SSL
+import utils
+
 
 # account credentials
 # Todo: Use env for this
@@ -15,16 +11,53 @@ from imaplib import IMAP4_SSL
 # imap_server = "imap://aaronwey%40posteo.de@posteo.de/INBOX"
 imap_server = "posteo.de"
 
-total_messages = 500
+password = ""
+total_messages = 75
+
+all_jsons_from_mails = []
+all_jsons_from_data = utils.load_events_from_file()
+
+
 with IMAP4_SSL("posteo.de") as inbox:
-    inbox.login(username, password)
+    inbox.login(utils.load_imap_name(), password)
     status, messages = inbox.select("endof10")
     messages = int(messages[0])
 
-    for i in range(1, messages):
+    for i in range(1, total_messages):
         # fetch the email message by ID
+
         res, msg = inbox.fetch(str(i), "(RFC822)")
-        print(i, msg[0:10])
+        for response in msg:
+            if isinstance(response, tuple):
+                # parse a bytes email into a message object
+                msg = email.message_from_bytes(response[1])
+
+                jsons = utils.extract_jsons_from_attachment(msg)
+                if jsons:
+                    print(i, jsons)
+                all_jsons_from_mails.extend(jsons)
+
+
+events_not_in_data = []
+for new_event in all_jsons_from_mails:
+    already_exists = False
+    comparisons = []
+    for existing_event in all_jsons_from_data:
+        comparison = utils.compare_event_json(
+            first_event=new_event, second_evend=existing_event
+        )
+        already_exists = already_exists or comparison
+        # print(already_exists)
+        if already_exists:
+            print(f"{new_event} and {existing_event} are probably the same")
+            break
+    if already_exists:
+        events_not_in_data.append(new_event)
+
+print(len(all_jsons_from_mails), len(all_jsons_from_data))
+for el in events_not_in_data:
+    print(f"\n{el}\n")
+
 exit()
 
 for i in range(1, messages):

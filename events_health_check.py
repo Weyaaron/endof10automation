@@ -5,26 +5,12 @@
 # Any questions should be sent to aaronwey on matrix or aaronwey@posteo.de, I will gladly help out.
 #
 
-import json
 import sys
 from datetime import datetime
-import os
-
-import requests
+import utils
 
 import urllib.request
 from urllib.parse import urlparse
-
-
-def load_from_file(path_as_str):
-    with open(path_as_str, "r") as file:
-        content = file.read()
-
-    return json.loads(content)
-
-
-def format_data(data_as_dict):
-    return json.dumps(data_as_dict, indent=2, ensure_ascii=False)
 
 
 def check_url_is_valid(entry, verbose):
@@ -90,9 +76,9 @@ if __name__ == "__main__":
             "If you use the argument '--exhaustive', it will do more checks which might take a while."
         )
         exit()
-    basic_path = "./data/events.json"
+    basic_path = "/home/aaron/Code/endof10-org/data/events.json"
 
-    data = load_from_file(basic_path)
+    data = utils.load_from_file(basic_path)
 
     print(f"This healthcheck will check a total of {len(data)} items")
     verbose = "--verbose" in sys.argv
@@ -102,7 +88,6 @@ if __name__ == "__main__":
         list_of_check_functions.append(check_url_ping)
 
     result_dict = {}
-    from datetime import datetime
 
     now = datetime.now().isoformat()
 
