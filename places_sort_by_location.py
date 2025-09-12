@@ -32,11 +32,17 @@ if __name__ == "__main__":
             "If you use the argument '--in-place', it will replace the 'data/events.json' with the events sorted by date."
         )
         exit()
-    basic_path = "/home/aaron/Code/endof10-org/data/events.json"
+    basic_path = "/home/aaron/Code/endof10-org/data/places.json"
 
     data = load_from_file(basic_path)
 
-    data_sorted = sorted(data, key=lambda x: datetime.fromisoformat(x.get("startDate")))
+    def key_func(x) -> str:
+        # return f"{x.get('adressCountry','')}{x.get('adressRegion',''}"
+        result = f"{x.get('addressCountry', '')}-{x.get('addressRegion', '')}-{x.get('addresLocality', '')}-{x.get('name', '')}"
+        print(result)
+        return result
+
+    data_sorted = sorted(data, key=key_func)
 
     if "--in-place" in sys.argv:
         os.remove(basic_path)
