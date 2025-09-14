@@ -36,19 +36,33 @@ if __name__ == "__main__":
             list_of_files_as_list.append(lines_in_file)
 
     list_of_files_as_list = [el for el in list_of_files_as_list if el]
+    list_of_files_as_list_that_are_events = [
+        el for el in list_of_files_as_list if utils.is_event(el)
+    ]
 
     combined_lines = initial_data_as_lines
     elements_skipped = 0
     elements_added = 0
-
-    set_of_existing_events = {}
-    for list_el in [el for el in list_of_files_as_list if utils.is_event(el)]:
-        prior_lines = combined_lines.copy()
-        combined_lines = utils.insert_event_into_lines(combined_lines, list_el)
-        if prior_lines == combined_lines:
+    segments = utils.split_linelist_into_segments(initial_data_as_lines)
+    set_of_existing_events = {
+        utils.cast_to_tuple_for_set_cmp_events(el)
+        for el in utils.split_linelist_into_segments(initial_data_as_lines)
+    }
+    print(initial_data_as_lines, segments, set_of_existing_events)
+    print(f"There are currently {len(set_of_existing_events)} events present!")
+    # exit()
+    for list_el in list_of_files_as_list_that_are_events:
+        if utils.cast_to_tuple_for_set_cmp_events(list_el) in set_of_existing_events:
+            print("Event likely already added, skipping!")
             elements_skipped = elements_skipped + 1
-        else:
-            elements_added = elements_added + 1
+            continue
+
+        combined_lines = utils.insert_event_into_lines(combined_lines, list_el)
+        set_of_existing_events.add(utils.cast_to_tuple_for_set_cmp_events(list_el))
+        print(
+            f"Added event, there are currently {len(set_of_existing_events)} events present."
+        )
+        elements_added = elements_added + 1
 
     print(f"Added: {elements_added}, Skipped: {elements_skipped}")
     basic_out_path = "./result.json"

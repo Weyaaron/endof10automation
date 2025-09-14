@@ -106,16 +106,29 @@ def is_place(lines):
 
 
 def extract_value_by_name(lines, key):
-    line_with_date = [el for el in lines if key in el][0]
-    return line_with_date.split('"')[3]
+    line_with_key = [el for el in lines if key in el][0]
+    if line_with_key:
+        try:
+            return line_with_key.split('"')[3]
+        except IndexError:
+            print(f"Unable to locate {key} in {line_with_key}")
+            return ""
+    return ""
 
 
 def cast_to_tuple_for_set_cmp_events(lines):
-    keys = ["startDate", "endDate", "latitude", "longitute"]
+    keys = [
+        "startDate",
+        "endDate",
+        "name",
+    ]
     result = []
     for el in keys:
         result.append(extract_value_by_name(lines, el))
     return tuple(result)
+
+    # keys = ["startDate", "endDate", "latitude", "longitude"]
+    # Todo: Extract lang, long
 
 
 def construct_start_end_indexes(list_of_lines) -> list:
@@ -132,12 +145,11 @@ def construct_start_end_indexes(list_of_lines) -> list:
     return start_end_tuples
 
 
-def splist_linelist_into_segments(list_of_lines) -> list:
+def split_linelist_into_segments(list_of_lines) -> list:
     segments = []
     for start, end in construct_start_end_indexes(list_of_lines):
         start = min(start, end)
         end = max(start, end)
-        print(start, end)
         if start == end:
             continue
         lines_in_between_indexes = list_of_lines[start:end]
@@ -157,7 +169,6 @@ def insert_event_into_lines(initial_data_as_lines, new_data_as_lines) -> list:
             pass
         start = min(start, end)
         end = max(start, end)
-        print(start, end)
         if start == end:
             continue
         lines_in_between_indexes = initial_data_as_lines[start:end]
