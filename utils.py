@@ -139,9 +139,17 @@ def construct_start_end_indexes(list_of_lines) -> list:
     end_indexes = [
         i for i in range(len(list_of_lines)) if list_of_lines[i].strip() in ["},", "}"]
     ]
+    print(len(start_indexes), len(end_indexes))
+    assert len(start_indexes) == len(end_indexes)
     start_end_tuples = [
         (start_indexes[i], end_indexes[i]) for i in range(len(start_indexes))
     ]
+    for i in range(len(start_end_tuples) - 1):
+        diff = start_end_tuples[i][1] - start_end_tuples[i + 1][0]
+        inner_diff = start_end_tuples[i][0] - start_end_tuples[i][1]
+        # print(i, start_end_tuples[i], start_end_tuples[i + 1], diff, inner_diff, "\n")
+        assert diff == -1
+
     return start_end_tuples
 
 
@@ -159,6 +167,7 @@ def split_linelist_into_segments(list_of_lines) -> list:
 
 def insert_event_into_lines(initial_data_as_lines, new_data_as_lines) -> list:
     new_date = extract_date_from_section(new_data_as_lines)
+    print(new_date)
 
     dividing_index = 0
 
@@ -170,6 +179,7 @@ def insert_event_into_lines(initial_data_as_lines, new_data_as_lines) -> list:
         start = min(start, end)
         end = max(start, end)
         if start == end:
+            print(f"Start equals end")
             continue
         lines_in_between_indexes = initial_data_as_lines[start:end]
 
@@ -179,14 +189,26 @@ def insert_event_into_lines(initial_data_as_lines, new_data_as_lines) -> list:
             print(f"Exiting early, no date found in section {lines_in_between_indexes}")
             exit()
             return initial_data_as_lines
+        # print(
+        #     date_of_this_section, new_date, type(date_of_this_section), type(new_date)
+        # )
         if date_of_this_section > new_date:
             dividing_index = start
+            print(f"Dividing index found: {dividing_index}")
             break
+    print(dividing_index)
 
-    middle = ["  }\n"] + new_data_as_lines[1:-1] + ["  },\n"]
+    # if dividing_index == 0:
+    #     print(start, end, lines_in_between_indexes)
 
-    return (
-        initial_data_as_lines[0:dividing_index]
+    middle = ["  },\n", "  {\n"] + new_data_as_lines[1:-1] + ["  },\n"]
+    # assert dividing_index > 0
+    # print(initial_data_as_lines[dividing_index], middle)
+
+    result = (
+        initial_data_as_lines[0 : dividing_index - 1]
         + middle
         + initial_data_as_lines[dividing_index:]
     )
+    # print(result[dividing_index - 3 : dividing_index + 3])
+    return result

@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 import os
 import utils
-
+import json
 from pathlib import Path
 import os
 
@@ -33,6 +33,12 @@ if __name__ == "__main__":
     for path_el in paths_that_jsons:
         with open(path_el, "r") as file:
             lines_in_file = [el for el in file.readlines() if el.strip().strip("\n")]
+            try:
+                result = json.loads("".join(lines_in_file))
+            except json.decoder.JSONDecodeError as e:
+                print(e)
+                print(f"Invalid json in file:{path_el}")
+                continue
             list_of_files_as_list.append(lines_in_file)
 
     list_of_files_as_list = [el for el in list_of_files_as_list if el]
@@ -48,7 +54,7 @@ if __name__ == "__main__":
         utils.cast_to_tuple_for_set_cmp_events(el)
         for el in utils.split_linelist_into_segments(initial_data_as_lines)
     }
-    print(initial_data_as_lines, segments, set_of_existing_events)
+    # print(initial_data_as_lines, segments, set_of_existing_events)
     print(f"There are currently {len(set_of_existing_events)} events present!")
     # exit()
     for list_el in list_of_files_as_list_that_are_events:
@@ -65,6 +71,7 @@ if __name__ == "__main__":
         elements_added = elements_added + 1
 
     print(f"Added: {elements_added}, Skipped: {elements_skipped}")
+    print(combined_lines[0:5])
     basic_out_path = "./result.json"
     target = basic_out_path
 
