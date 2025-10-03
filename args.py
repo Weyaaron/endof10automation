@@ -2,6 +2,7 @@
 # They will be loaded from the env or by "input".
 
 import os
+import sys
 
 
 def get_arg(env_name: str, human_name: str):
@@ -24,7 +25,13 @@ def get_arg(env_name: str, human_name: str):
 
 GITLAB_TOKEN = get_arg("gitlab_token", "Acces-Token of gitlab")
 GITLAB_SSH_URL = get_arg(
-    "gitlab_url", "Full url to the repo intended as a base.('Source of the data')"
+    "gitlab_ssh_url", "Full url to the repo intended as a base.('Source of the data')"
+)
+
+GITLAB_REPO_ID_TARGET = get_arg(
+    "gitlab_repo_id_target",
+    "Numeric id of the repo intended as the target of the mr.",
 )
 GITLAB_SSH_URL = "git@invent.kde.org:aaronwey/endof10-org.git"
 REPO_BASE_DIR = "/tmp/"
+GITLAB_ROOT = "invent.kde.org"

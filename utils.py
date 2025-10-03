@@ -21,7 +21,7 @@ import os
 
 import random
 from pathlib import Path
-from args import GITLAB_TOKEN, REPO_BASE_DIR, GITLAB_SSH_URL
+from args import GITLAB_TOKEN, REPO_BASE_DIR, GITLAB_SSH_URL, GITLAB_ROOT
 
 
 def execute_shell_in_dir(dir: Path, cmd: str):
@@ -70,9 +70,8 @@ def create_mr(git_dir: Path, local_branch: str):
     mr_headers = {"PRIVATE-TOKEN": GITLAB_TOKEN}
     # Todo: Add support for merge-requests across repos
 
-    gitlab_repo = "invent.kde.org"
     project_id = 22965
-    mr_url = f"https://{gitlab_repo}/api/v4/projects/{project_id}/merge_requests"
+    mr_url = f"https://{GITLAB_TOKEN}/api/v4/projects/{project_id}/merge_requests"
     mr_data = {
         "source_branch": local_branch,
         "target_branch": "master",
