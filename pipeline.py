@@ -40,12 +40,19 @@ args = {
     "password": os.getenv("limesurvey_password"),
     "survey": os.getenv("limesurvey_survey_id"),
 }
-args = {"url":}
+# args = {"url":}
 # set filenames name
 places_gitlab_json_file = "data/places.json"
 places_lime_json_file = "ci/places_lime.json"
 
-download_limesurvey_raw()
+# download_limesurvey_raw()
+from utils import init_git_repo, create_mr
+
+# local_git_repo_path, local_branch = init_git_repo()
+# create_mr(local_git_repo_path, local_branch)
+
+# download_limesurvey_raw()
+
 exit()
 
 
@@ -154,34 +161,6 @@ def mrf(branch, msg, places_df, index):
     # commit
     logger.info("Commit git")
     subprocess.run(["git", "commit", "-m", msg], check=False)
-
-    # commit
-    logger.info("git diff")
-    subprocess.run(["git", "diff", default_branch], check=False)
-
-    # push the commit
-    logger.info("push the commit")
-    subprocess.run(["git", "push", "origin", "HEAD:" + branch], check=True)
-
-    # send merge request
-    mr_headers = {"PRIVATE-TOKEN": gitlab_pat}
-    mr_url = f"https://{gitlab_repo}/api/v4/projects/{project_id}/merge_requests"
-    mr_data = {
-        "source_branch": branch,
-        "target_branch": default_branch,
-        "title": msg,
-        "description": "Automated update from CI pipeline. " + msg,
-        "remove_source_branch": True,
-        "squash": True,
-    }
-
-    response = requests.post(mr_url, headers=mr_headers, data=mr_data)
-    if response.ok:
-        print("✅ Merge request created:", response.json()["web_url"])
-    else:
-        print("❌ Failed to create merge request:", response.text)
-        exit(1)
-    return
 
 
 # get the data from lime survey in json format using citric

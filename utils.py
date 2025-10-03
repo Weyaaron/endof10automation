@@ -14,6 +14,81 @@ import time
 import requests
 import shutil
 
+import subprocess
+
+import os
+
+
+import random
+from pathlib import Path
+from args import GITLAB_TOKEN, REPO_BASE_DIR, GITLAB_SSH_URL
+
+
+def execute_shell_in_dir(dir: Path, cmd: str):
+    full_cmd = f"cd {dir};{cmd}"
+    print(full_cmd)
+    shell_instance = subprocess.Popen(
+        full_cmd,
+        shell=True,
+        stdin=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        bufsize=0,
+        text=True,
+        universal_newlines=True,
+    )
+
+    stdout, x = shell_instance.communicate()
+    print(stdout, x)
+
+
+def init_git_repo():
+    random_dir = f"endof10automation-repo-{random.randrange(0, 100)}"
+    # Todo: Deal with existing directories
+    git_dir = Path(REPO_BASE_DIR + random_dir)
+    # git_ssh_url = "git@github.com:Weyaaron/endof10automation.git"
+    random_branch_name = f"branch-{random.randrange(0, 100)}"
+
+    clone = f"git clone {GITLAB_SSH_URL} {git_dir}"
+    new_branch = f"cd {git_dir};git branch {random_branch_name}"
+    switch_branch = f"cd {git_dir};git switch {random_branch_name}"
+    execute_shell_in_dir(Path("~"), clone)
+    for command_el in [new_branch, switch_branch]:
+        execute_shell_in_dir(git_dir, command_el)
+    return git_dir, random_branch_name
+
+
+def create_mr(git_dir: Path, local_branch: str):
+    execute_shell_in_dir(git_dir, "git add .")
+    execute_shell_in_dir(git_dir, "git commit -m'message to be determined'")
+    execute_shell_in_dir(git_dir, "git push")
+    # subprocess.run(["git", "diff", default_branch], check=False)
+
+    # push the commit
+    # logger.info("push the commit")
+    # subprocess.run(["git", "push", "origin", "HEAD:" + branch], check=True)
+
+    mr_headers = {"PRIVATE-TOKEN": GITLAB_TOKEN}
+
+    gitlab_repo = "invent.kde.org"
+    project_id = 22965
+    mr_url = f"https://{gitlab_repo}/api/v4/projects/{project_id}/merge_requests"
+    mr_data = {
+        "source_branch": local_branch,
+        "target_branch": "master",
+        "title": "Ein Titel",
+        "description": "Automated update from CI pipeline. ",
+        "remove_source_branch": True,
+        "squash": True,
+    }
+    # --tod:
+    # response = requests.post(mr_url, headers=mr_headers, data=mr_data)
+    # if response.ok:
+    #     print("✅ Merge request created:", response.json()["web_url"])
+    # else:
+    #     print("❌ Failed to create merge request:", response.text)
+    #     exit(1)
+    # return
+
 
 # # testing getenv
 # test_getenv = os.getenv("test_getenv")
@@ -319,6 +394,8 @@ def sort_up_until_month(data):
     )
     data_sorted = sorted_slice + later_slice
     assert len(data_sorted) == len(data)
+
+
 def setup_logger():
     import logging
     import traceback
@@ -342,14 +419,26 @@ def setup_logger():
 
 def download_limesurvey_raw():
     # initialize the citric client for Lime
-    client = LS_Client(
-        url=args["url"], username=args["username"], password=args["password"]
-    )
+    # Survey ID: 324214
+    # Username: service-endof10
+    # Password: XZTB34Hmf74bdujidx
+    url = ""
+    username = "service-endof10"
+    password = "XZTB34Hmf74bdujidx"
+    survey = "324214"
+    # url = "https://www.limesurvey.orgremotecontrol/"
+    # url = "https://survey.kde.org/admin/remotecontrol"
+    url = "https://survey.kde.org/"
+    # client = LS_Client(
+    #     url=args["url"], username=args["username"], password=args["password"]
+    # )
 
+    client = LS_Client(url=url, username=username, password=password)
     # get the data as JSON into a df
-    jret = client.export_responses(args["survey"], file_format="json")
+    jret = client.export_responses(survey, file_format="json")
     jret = jret.decode("utf-8")
     jdata = json.loads(jret)
     lime_new_df = pd.DataFrame.from_dict(
         pd.json_normalize(jdata["responses"]), orient="columns"
     ).set_index("id")
+    print(lime_new_df)
