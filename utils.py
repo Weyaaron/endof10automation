@@ -68,6 +68,7 @@ def create_mr(git_dir: Path, local_branch: str):
     # subprocess.run(["git", "push", "origin", "HEAD:" + branch], check=True)
 
     mr_headers = {"PRIVATE-TOKEN": GITLAB_TOKEN}
+    # Todo: Add support for merge-requests across repos
 
     gitlab_repo = "invent.kde.org"
     project_id = 22965
@@ -416,29 +417,3 @@ def setup_logger():
     logger.info("Importing needed libraries.")
     return logger
 
-
-def download_limesurvey_raw():
-    # initialize the citric client for Lime
-    # Survey ID: 324214
-    # Username: service-endof10
-    # Password: XZTB34Hmf74bdujidx
-    url = ""
-    username = "service-endof10"
-    password = "XZTB34Hmf74bdujidx"
-    survey = "324214"
-    # url = "https://www.limesurvey.orgremotecontrol/"
-    # url = "https://survey.kde.org/admin/remotecontrol"
-    url = "https://survey.kde.org/"
-    # client = LS_Client(
-    #     url=args["url"], username=args["username"], password=args["password"]
-    # )
-
-    client = LS_Client(url=url, username=username, password=password)
-    # get the data as JSON into a df
-    jret = client.export_responses(survey, file_format="json")
-    jret = jret.decode("utf-8")
-    jdata = json.loads(jret)
-    lime_new_df = pd.DataFrame.from_dict(
-        pd.json_normalize(jdata["responses"]), orient="columns"
-    ).set_index("id")
-    print(lime_new_df)
