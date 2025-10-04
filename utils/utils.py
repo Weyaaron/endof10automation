@@ -25,6 +25,17 @@ from pathlib import Path
 from utils.args import GITLAB_TOKEN, REPO_BASE_DIR, GITLAB_SSH_URL, GITLAB_ROOT, get_arg
 
 
+def load_from_file(path_as_str):
+    with open(path_as_str, "r") as file:
+        content = file.read()
+
+    return json.loads(content)
+
+
+def format_data(data_as_dict):
+    return json.dumps(data_as_dict, indent=2, ensure_ascii=False)
+
+
 def execute_shell_in_dir(dir: Path, cmd: str):
     full_cmd = f"cd {dir};{cmd}"
     print(full_cmd)

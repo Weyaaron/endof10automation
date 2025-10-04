@@ -16,6 +16,15 @@ respectivly. They contain, in various stages of completion(!):
 - check: Checks for completion/validity
 - pipeline: Opens a mr to gitlab to add new entries
 
+As of 2025-10-04, their status is:
+
+
+| Modul | Name | Status |
+| ----------- | -------- | ---- |
+| Events | Sort | Done |
+| Events | check | x |
+
+
 # Setup
 A virtual environment is recommended but not
 mandatory. Current dependencies are:
@@ -26,7 +35,8 @@ They can be installed by using "pip [name]".
 It is encouraged to setup the args to avoid manual input.
 This can be done in one of two ways: You can edit 'utils/args.py'
 in place. This is easy, but has disadvantages when the package will be
-updatet.
+updated.
+
 The other option is to export these values using environment-variables.
 When you are prompted for a argument, the name of the environment variable
 that is required will be printed.

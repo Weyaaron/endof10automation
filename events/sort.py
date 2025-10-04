@@ -1,38 +1,26 @@
-#!/usr/bin/env python3
-#
-# This is a small script intendet to aid in data maintenance of the endof10-website.
-# As of 2025-08-15, it will sort the events by date and print the result.
-# Any questions should be sent to aaronwey on matrix or aaronwey@posteo.de, I will gladly help out.
-#
-
-import json
 import sys
+
+sys.path.append(".")
+
 from datetime import datetime
 import os
 
-
-def load_from_file(path_as_str):
-    with open(path_as_str, "r") as file:
-        content = file.read()
-
-    return json.loads(content)
-
-
-def format_data(data_as_dict):
-    return json.dumps(data_as_dict, indent=2, ensure_ascii=False)
-
+from utils.utils import load_from_file, format_data
 
 if __name__ == "__main__":
     if "--help" in sys.argv:
         print("This is the manual for this script.")
         print(
-            "It will read the events from 'data/events.json', sort them by date and print them."
+            "It will read the events from a provided file, sort them by date and print them."
         )
         print(
-            "If you use the argument '--in-place', it will replace the 'data/events.json' with the events sorted by date."
+            "If you use the argument '--in-place', it will replace the providid file with the events sorted by date."
         )
         exit()
-    basic_path = "/home/aaron/Code/endof10-org/data/events.json"
+
+    basic_path = input(
+        "Please provide the source path of the events. Relative works as well:"
+    )
 
     data = load_from_file(basic_path)
 
