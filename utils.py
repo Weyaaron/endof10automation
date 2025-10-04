@@ -22,6 +22,7 @@ import os
 import random
 from pathlib import Path
 from args import GITLAB_TOKEN, REPO_BASE_DIR, GITLAB_SSH_URL, GITLAB_ROOT
+from args import get_arg
 
 
 def execute_shell_in_dir(dir: Path, cmd: str):
@@ -42,11 +43,18 @@ def execute_shell_in_dir(dir: Path, cmd: str):
 
 
 def init_git_repo():
+    from args import GITLAB_TOKEN, REPO_BASE_DIR, GITLAB_SSH_URL, GITLAB_ROOT
+
     random_dir = f"endof10automation-repo-{random.randrange(0, 100)}"
     # Todo: Deal with existing directories
     git_dir = Path(REPO_BASE_DIR + random_dir)
     # git_ssh_url = "git@github.com:Weyaaron/endof10automation.git"
     random_branch_name = f"branch-{random.randrange(0, 100)}"
+
+    GITLAB_SSH_URL = GITLAB_SSH_URL or get_arg(
+        "gitlab_ssh_url",
+        "Full url to the repo intended as a base.('Source of the data')",
+    )
 
     clone = f"git clone {GITLAB_SSH_URL} {git_dir}"
     new_branch = f"cd {git_dir};git branch {random_branch_name}"
@@ -58,6 +66,14 @@ def init_git_repo():
 
 
 def create_mr(git_dir: Path, local_branch: str):
+    from args import (
+        GITLAB_TOKEN,
+        REPO_BASE_DIR,
+        GITLAB_SSH_URL,
+        GITLAB_ROOT,
+        GITLAB_REPO_ID_TARGET,
+    )
+
     execute_shell_in_dir(git_dir, "git add .")
     execute_shell_in_dir(git_dir, "git commit -m'message to be determined'")
     execute_shell_in_dir(git_dir, "git push")
@@ -67,11 +83,18 @@ def create_mr(git_dir: Path, local_branch: str):
     # logger.info("push the commit")
     # subprocess.run(["git", "push", "origin", "HEAD:" + branch], check=True)
 
+    GITLAB_TOKEN = GITLAB_TOKEN or get_arg("gitlab_token", "Acces-Token of gitlab")
     mr_headers = {"PRIVATE-TOKEN": GITLAB_TOKEN}
     # Todo: Add support for merge-requests across repos
 
-    project_id = 22965
-    mr_url = f"https://{GITLAB_TOKEN}/api/v4/projects/{project_id}/merge_requests"
+    GITLAB_REPO_ID_TARGET = GITLAB_REPO_ID_TARGET or get_arg(
+        "gitlab_repo_id_target",
+        "Numeric id of the repo intended as the target of the mr.",
+    )
+
+    mr_url = (
+        f"https://{GITLAB_ROOT}/api/v4/projects/{GITLAB_REPO_ID_TARGET}/merge_requests"
+    )
     mr_data = {
         "source_branch": local_branch,
         "target_branch": "master",

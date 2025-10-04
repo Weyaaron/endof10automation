@@ -4,6 +4,13 @@
 import os
 import sys
 
+GITLAB_TOKEN = ""
+# GITLAB_SSH_URL = "git@invent.kde.org:aaronwey/endof10-org.git"
+GITLAB_SSH_URL = "git@invent.kde.org:aaronwey/endof10-org.git"
+REPO_BASE_DIR = "/tmp/"
+GITLAB_ROOT = "invent.kde.org"
+GITLAB_REPO_ID_TARGET = "22965"
+
 
 def get_arg(env_name: str, human_name: str):
     from_env = os.getenv(env_name)
@@ -21,17 +28,3 @@ def get_arg(env_name: str, human_name: str):
         )
         exit()
     return value
-
-
-GITLAB_TOKEN = get_arg("gitlab_token", "Acces-Token of gitlab")
-GITLAB_SSH_URL = get_arg(
-    "gitlab_ssh_url", "Full url to the repo intended as a base.('Source of the data')"
-)
-
-GITLAB_REPO_ID_TARGET = get_arg(
-    "gitlab_repo_id_target",
-    "Numeric id of the repo intended as the target of the mr.",
-)
-GITLAB_SSH_URL = "git@invent.kde.org:aaronwey/endof10-org.git"
-REPO_BASE_DIR = "/tmp/"
-GITLAB_ROOT = "invent.kde.org"
