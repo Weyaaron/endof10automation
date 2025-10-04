@@ -22,11 +22,10 @@ def get_arg(env_name: str, human_name: str):
         print(
             f"Unable to read the variable '{env_name}' intended to use as {human_name} from the environment. Will ask for your input next."
         )
-        # value = input(f"Please provide a value vor the argument '{human_name}'")
     value = input(f"Please provide a value for the argument '{human_name}':")
     if not value:
         print(
-            "Unable to use the provided value, the empty string is not a valid value. Check the documentation for alternatives on how to set this arg"
+            "Unable to use the provided value, the empty string is not a valid value. Check the documentation for alternatives on how to set this arg."
         )
         exit()
     return value
