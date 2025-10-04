@@ -1,11 +1,16 @@
-
-
 # Endof10Automation
 
 This repo provides a series of scripts that automate
 adding events/places to the website https://endof10.org/.
 Since there is some potential to spam gitlab, please use
 with caution. This repo is provided as is.
+
+# Setup
+A virtual environment is recommended but not
+mandatory. Current dependencies are:
+- pyperclip
+
+They can be installed by using "pip [name]".
 
 # Organisation
 The directories 'events' and 'places' contain
@@ -18,21 +23,18 @@ respectivly. They contain, in various stages of completion(!):
 
 As of 2025-10-04, their status is:
 
-
 | Modul | Name | Status |
 | ----------- | -------- | ---- |
 | Events | Sort | Done |
-| Events | check | x |
+| Events | Check | x |
+| Events | Pipeline| Done |
+| Places | Sort | x|
+| Places | Check | x |
+| Places | Pipeline| x |
 
+# How to provide args in a way that avoids manual input during execution
 
-# Setup
-A virtual environment is recommended but not
-mandatory. Current dependencies are:
-- pyperclip
-
-They can be installed by using "pip [name]".
-
-It is encouraged to setup the args to avoid manual input.
+It is encouraged to setup a variety args to avoid manual input.
 This can be done in one of two ways: You can edit 'utils/args.py'
 in place. This is easy, but has disadvantages when the package will be
 updated.
