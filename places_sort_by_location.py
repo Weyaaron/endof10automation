@@ -11,17 +11,15 @@ from datetime import datetime
 import os
 
 
-from utils import load_from_file, format_data
+def load_from_file(path_as_str):
+    with open(path_as_str, "r") as file:
+        content = file.read()
 
-keys = ["addressCountry", "adressRegion"]
+    return json.loads(content)
 
 
-def sort_using_recursion(input_as_list, i) -> list:
-    if i > len(keys):
-        return input_as_list
-    key = keys[i]
-    keys_for_slices = list(set([el.get(key) for el in input_as_list]))
-    # key,slices = [(key, [el for el in input_as_list if el.get(key) == key)])
+def format_data(data_as_dict):
+    return json.dumps(data_as_dict, indent=2, ensure_ascii=False)
 
 
 if __name__ == "__main__":
@@ -67,3 +65,11 @@ if __name__ == "__main__":
             format_data(tuple_el[0]),
             "\n",
         )
+
+    locations = sorted(list(set([el["addressRegion"] for el in data])))
+    for el in locations:
+        print(el)
+
+    locations = sorted(list(set([el["addressCountry"] for el in data])))
+    for el in locations:
+        print(el)

@@ -202,17 +202,6 @@ def compare_event_json(first_event, second_evend) -> bool:
     return same_lat and same_long and same_email
 
 
-def load_from_file(path_as_str):
-    with open(path_as_str, "r") as file:
-        content = file.read()
-
-    return json.loads(content)
-
-
-def format_data(data_as_dict):
-    return json.dumps(data_as_dict, indent=2, ensure_ascii=False)
-
-
 def load_from_file_as_lines(path_as_str):
     with open(path_as_str, "r") as file:
         content = file.readlines()
