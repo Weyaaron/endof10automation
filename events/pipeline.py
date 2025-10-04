@@ -13,6 +13,9 @@ from utils.utils import (
     input_events,
     prepare_path_for_git_repo,
     validate_events,
+    init_branch_name,
+    switch_branch,
+    insert_event_into_file,
 )
 
 if __name__ == "__main__":
@@ -20,7 +23,9 @@ if __name__ == "__main__":
         print("This is the manual for this script.")
         print("This script is intendet to automate work for the campaign 'endof10'.")
         print("It is currently work in progress.")
-        print("By default, it does not do anything but runs through some setup.")
+        print(
+            "By default, it does not do anything but attempts to parse the events that will be added."
+        )
         print("To enable actuall results, please use --commit as an arg.")
         exit()
 
@@ -36,9 +41,14 @@ if __name__ == "__main__":
             f"Currently running in dry-mode, which will do the setup but not effect anything. To enable effects, use {SYS_ARG_COMMIT}"
         )
 
-    git_dir = prepare_path_for_git_repo()
     new_events = input_events()
-    validate_events(new_events)
+    valid_events = validate_events(new_events)
 
-    local_git_repo_path, local_branch = init_git_repo_at_path(git_dir)
-    create_mr(local_git_repo_path, local_branch)
+    for event_el in valid_events:
+        current_git_dir = prepare_path_for_git_repo()
+        new_branch = init_branch_name()
+        init_git_repo_at_path(current_git_dir)
+        insert_event_into_file(current_git_dir, event_el)
+        switch_branch(current_git_dir, new_branch)
+        create_mr(current_git_dir, new_branch)
+        print(current_git_dir)

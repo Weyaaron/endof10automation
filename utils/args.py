@@ -10,7 +10,8 @@ GITLAB_SSH_URL = "git@invent.kde.org:aaronwey/endof10-org.git"
 REPO_BASE_DIR = "/tmp/"
 GITLAB_ROOT = "invent.kde.org"
 GITLAB_REPO_ID_TARGET = "22965"
-EVENT_SOURCE_FILE_PATH = "/home/aaron/Code/Python/endof10automation/event.json"
+EVENT_SOURCE_FILE_PATH = "./events.json"
+EVENT_FILE_PATH_IN_REPO = "./data/events.json"
 
 
 def get_arg(env_name: str, human_name: str):
