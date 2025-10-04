@@ -1,12 +1,19 @@
 import sys
 import sys
+
 sys.path.append(".")
 
 SYS_ARG_HELP = "--help"
 SYS_ARG_COMMIT = "--commit"
 SYS_ARG_IS_IN_COMMIT_MODE = SYS_ARG_COMMIT in sys.argv
 SYS_ARG_IS_IN_HELP_MODE = SYS_ARG_HELP in sys.argv
-from utils.utils import init_git_repo, create_mr
+from utils.utils import (
+    init_git_repo_at_path,
+    create_mr,
+    input_events,
+    prepare_path_for_git_repo,
+    validate_events,
+)
 
 if __name__ == "__main__":
     if SYS_ARG_IS_IN_HELP_MODE:
@@ -29,5 +36,9 @@ if __name__ == "__main__":
             f"Currently running in dry-mode, which will do the setup but not effect anything. To enable effects, use {SYS_ARG_COMMIT}"
         )
 
-    local_git_repo_path, local_branch = init_git_repo()
+    git_dir = prepare_path_for_git_repo()
+    new_events = input_events()
+    validate_events(new_events)
+
+    local_git_repo_path, local_branch = init_git_repo_at_path(git_dir)
     create_mr(local_git_repo_path, local_branch)

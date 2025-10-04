@@ -41,13 +41,21 @@ def execute_shell_in_dir(dir: Path, cmd: str):
     print(stdout, x)
 
 
-def init_git_repo():
-    from utils.args import GITLAB_TOKEN, REPO_BASE_DIR, GITLAB_SSH_URL, GITLAB_ROOT
+from pathlib import Path
+
+
+def prepare_path_for_git_repo() -> Path:
+    from utils.args import REPO_BASE_DIR
 
     random_dir = f"endof10automation-repo-{random.randrange(0, 100)}"
     # Todo: Deal with existing directories
     git_dir = Path(REPO_BASE_DIR + random_dir)
-    # git_ssh_url = "git@github.com:Weyaaron/endof10automation.git"
+    return git_dir
+
+
+def init_git_repo_at_path(git_dir: Path):
+    from utils.args import GITLAB_TOKEN, REPO_BASE_DIR, GITLAB_SSH_URL, GITLAB_ROOT
+
     random_branch_name = f"branch-{random.randrange(0, 100)}"
 
     GITLAB_SSH_URL = GITLAB_SSH_URL or get_arg(
@@ -128,3 +136,23 @@ def setup_logger():
     return logger
 
 
+def input_events() -> list:
+    from utils.args import (
+        EVENT_SOURCE_FILE_PATH,
+    )
+
+    EVENT_SOURCE_FILE_PATH = EVENT_SOURCE_FILE_PATH or get_arg(
+        "event_source_file_path", "A path to a file containing events"
+    )
+    event_str = ""
+
+    if not EVENT_SOURCE_FILE_PATH:
+        EVENT_SOURCE_FILE_PATH = input("Please enter a path to a event")
+        if EVENT_SOURCE_FILE_PATH == "s":
+            event_str = input("Please enter a event as a string")
+
+    print(EVENT_SOURCE_FILE_PATH, event_str)
+
+
+def validate_events(events: list):
+    pass
