@@ -12,6 +12,9 @@ GITLAB_ROOT = "invent.kde.org"
 GITLAB_REPO_ID_TARGET = "22965"
 EVENT_SOURCE_FILE_PATH = "./events.json"
 EVENT_FILE_PATH_IN_REPO = "./data/events.json"
+# This is provided for convenience, if left
+# empty a 'automatic message' will be created
+GITLAB_MR_MESSAGE = ""
 
 
 def get_arg(env_name: str, human_name: str):

@@ -1,6 +1,7 @@
 import sys
 
 sys.path.append(".")
+import shutil
 
 SYS_ARG_HELP = "--help"
 SYS_ARG_COMMIT = "--commit"
@@ -15,6 +16,9 @@ from utils.utils import (
     init_branch_name,
     switch_branch,
     insert_event_into_file,
+    load_from_file,
+    determine_file_target_path,
+    format_data,
 )
 
 if __name__ == "__main__":
@@ -44,10 +48,26 @@ if __name__ == "__main__":
     valid_events = validate_events(new_events)
 
     for event_el in valid_events:
-        current_git_dir = prepare_path_for_git_repo()
-        new_branch = init_branch_name()
+        current_git_dir = prepare_path_for_git_repo(event_el)
+        new_branch = init_branch_name(event_el)
+
         init_git_repo_at_path(current_git_dir)
+
+        events_already_in_place = load_from_file(
+            determine_file_target_path(current_git_dir)
+        )
+        # Todo: Implement this
+        # set_of_tuples_of_events_already_in_place = (
+
+        event_as_formated_str = format_data(event_el, sorted_keys=True)
+        print(f"This event has been parsed succesfully:{event_as_formated_str}")
+        user_input_confirmation = input(
+            "Please confirm its inclusion with y, any other input will skip this event:"
+        )
+        if not user_input_confirmation == "y":
+            print("Current Event has been skipped!")
+            shutil.rmtree(current_git_dir)
+            continue
         insert_event_into_file(current_git_dir, event_el)
         switch_branch(current_git_dir, new_branch)
-        create_mr(current_git_dir, new_branch)
-        print(current_git_dir)
+        create_mr(current_git_dir, new_branch, event_el)
