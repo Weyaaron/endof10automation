@@ -1,4 +1,9 @@
 import os
+import shutil
+
+from datetime import datetime
+from typing import Optional
+import configparser
 import json
 import pyperclip
 import json
@@ -23,14 +28,9 @@ import os
 
 import random
 from pathlib import Path
-from utils.args import GITLAB_TOKEN, REPO_BASE_DIR, GITLAB_SSH_URL, GITLAB_ROOT, get_arg
 import sys
 
 from pathlib import Path
-
-
-SYS_ARG_COMMIT = "--commit"
-SYS_ARG_IS_IN_COMMIT_MODE = SYS_ARG_COMMIT in sys.argv
 
 
 def load_from_file(path_as_str):
@@ -61,13 +61,13 @@ def execute_shell_in_dir(dir: Path, cmd: str):
 
 
 def prepare_path_for_git_repo(event_as_dict: dict) -> Path:
-    from utils.args import REPO_BASE_DIR
+    git_repo_base_dir = load_config_value("local", "base_dir")
 
     basic_name = event_as_dict.get("name")
     cleaned_name = basic_name.replace("/", "-").replace(" ", "_")
 
     name_as_path = Path(f"./{cleaned_name}")
-    git_dir = Path(REPO_BASE_DIR).joinpath(name_as_path)
+    git_dir = Path(git_repo_base_dir).joinpath(name_as_path)
     return git_dir
 
 
@@ -82,17 +82,16 @@ def cast_into_tuple_for_comparison(event_as_dict: dict) -> tuple:
 def init_branch_name(event_as_dict: dict) -> str:
     # random_branch_name = f"branch-{random.randrange(0, 100)}"
     # return random_branch_name
-    return f"{event_as_dict['name']}-{datetime.today().isoformat()}"
+
+    basic_name = event_as_dict.get("name")
+    cleaned_name = basic_name.replace("/", "-").replace(" ", "_")
+
+    name_with_date = f"{cleaned_name}-{datetime.today().isoformat()}"
+    # Apparently a git branch name does not allow ':'
+    return name_with_date.replace(":", "-")
 
 
 def switch_branch(git_dir: Path, branch_name: str):
-    from utils.args import GITLAB_TOKEN, REPO_BASE_DIR, GITLAB_SSH_URL, GITLAB_ROOT
-
-    GITLAB_SSH_URL = GITLAB_SSH_URL or get_arg(
-        "gitlab_ssh_url",
-        "Full url to the repo intended as a base.('Source of the data')",
-    )
-
     new_branch = f"cd {git_dir};git branch {branch_name}"
     switch_branch = f"cd {git_dir};git switch {branch_name}"
     for command_el in [new_branch, switch_branch]:
@@ -100,50 +99,28 @@ def switch_branch(git_dir: Path, branch_name: str):
 
 
 def init_git_repo_at_path(git_dir: Path):
-    from utils.args import GITLAB_SSH_URL
-
-    GITLAB_SSH_URL = GITLAB_SSH_URL or get_arg(
-        "gitlab_ssh_url",
-        "Full url to the repo intended as a base.('Source of the data')",
+    gitlab_ssh_url = load_config_value("gitlab", "ssh_url")
+    # Todo: ask for confirmation
+    print(
+        f"Attempting to clone into {git_dir}, this might exist, in this case removal will be attempted"
     )
-    import shutil
-
-    try:
-        shutil.rmtree(git_dir)
-    except FileNotFoundError:
-        pass
-    clone = f"git clone {GITLAB_SSH_URL} {git_dir}"
+    remove_dir_pending_confirmation(git_dir)
+    clone = f"git clone {gitlab_ssh_url} {git_dir}"
     execute_shell_in_dir(Path("~"), clone)
 
 
 def create_mr(git_dir: Path, local_branch: str, event_as_dict: dict):
-    from utils.args import (
-        GITLAB_TOKEN,
-        REPO_BASE_DIR,
-        GITLAB_SSH_URL,
-        GITLAB_ROOT,
-        GITLAB_REPO_ID_TARGET,
-    )
-
     commit_msg = f"add {event_as_dict.get('name')}"
     execute_shell_in_dir(git_dir, "git add .")
     execute_shell_in_dir(git_dir, f"git commit -m'{commit_msg}'")
-    if SYS_ARG_IS_IN_COMMIT_MODE:
-        execute_shell_in_dir(git_dir, "git push")
-    else:
-        print("The setup up until the push to the remote branch has been done")
-        print("The push has been skipped because the mode is not 'commit'")
+    execute_shell_in_dir(git_dir, "git push")
 
-    GITLAB_TOKEN = GITLAB_TOKEN or get_arg("gitlab_token", "Access-Token for gitlab")
+    gitlab_token = load_config_value("gitlab", "token")
 
-    GITLAB_REPO_ID_TARGET = GITLAB_REPO_ID_TARGET or get_arg(
-        "gitlab_repo_id_target",
-        "Numeric id of the repo intended as the target of the mr.",
-    )
+    gitlab_mr_repo_id = load_config_value("gitlab", "mr_repo_id")
+    gitlab_root = load_config_value("gitlab", "root")
 
-    mr_url = (
-        f"https://{GITLAB_ROOT}/api/v4/projects/{GITLAB_REPO_ID_TARGET}/merge_requests"
-    )
+    mr_url = f"https://{gitlab_root}/api/v4/projects/{gitlab_mr_repo_id}/merge_requests"
     mr_data = {
         "source_branch": local_branch,
         "target_branch": "master",
@@ -151,20 +128,54 @@ def create_mr(git_dir: Path, local_branch: str, event_as_dict: dict):
         "description": f"Automated Event update from pipeline containing event {event_as_dict.get('name')}",
         "remove_source_branch": True,
         "squash": True,
-        "target_project_id": GITLAB_REPO_ID_TARGET,
+        "target_project_id": gitlab_mr_repo_id,
     }
 
-    mr_headers = {"PRIVATE-TOKEN": GITLAB_TOKEN}
-    return
-    if SYS_ARG_IS_IN_COMMIT_MODE:
-        response = requests.post(mr_url, headers=mr_headers, data=mr_data)
-        if response.ok:
-            print("✅ Merge request created:", response.json()["web_url"])
-        else:
-            print("❌ Failed to create merge request:", response.text)
+    mr_headers = {"PRIVATE-TOKEN": gitlab_token}
+    response = requests.post(mr_url, headers=mr_headers, data=mr_data)
+    if response.ok:
+        print("✅ Merge request created:", response.json()["web_url"])
     else:
-        print("The setup up until the mr-creation has been done")
-        print("The mr creation has beend skipped because the mode is not 'commit'")
+        print("❌ Failed to create merge request:", response.text)
+
+
+def load_config_file_path() -> Path:
+    config_path = ""
+    if "--config" not in sys.argv:
+        print(
+            "You did not provide a config. This is necessary for the programm to run. Plase provide one with --config [path]. The recommended path is 'local.config' The program will exit."
+        )
+        exit()
+    else:
+        for i in range(0, len(sys.argv)):
+            if sys.argv[i] == "--config":
+                config_path = sys.argv[i + 1]
+
+    return Path(config_path).absolute()
+
+
+def load_config_value(section: str, name: str) -> str:
+    config_path = load_config_file_path()
+    config = configparser.ConfigParser()
+
+    config.read(config_path)
+    try:
+        return config.get(section, name)
+    except configparser.NoOptionError:
+        print(
+            f"Your provided config at {config_path} did not provide the value '{name}' in section '{section}'. This argument is mandatory, please edit your config accordingly."
+        )
+        exit()
+
+    except configparser.NoSectionError:
+        print(
+            f"Your provided config at {config_path} did not provide the section '{section}'. This section is mandatory, please edit your config accordingly."
+        )
+        exit()
+
+
+def validate_config():
+    pass
 
 
 def setup_logger():
@@ -188,9 +199,6 @@ def setup_logger():
     return logger
 
 
-from typing import Optional
-
-
 def _event_from_str(input_as_str: str) -> Optional[dict]:
     import json
 
@@ -209,7 +217,7 @@ def _ensure_is_list(input_data) -> list:
     return [input_data]
 
 
-def input_events() -> list:
+def attempt_clipboard_parsing() -> dict:
     current_clipboard_text = pyperclip.paste()
     event_from_clipboard = _event_from_str(current_clipboard_text)
     if event_from_clipboard:
@@ -218,36 +226,66 @@ def input_events() -> list:
     else:
         print("The clipboard did not contain valid json, will try other options.")
 
-    from utils.args import (
-        EVENT_SOURCE_FILE_PATH,
-    )
 
-    EVENT_SOURCE_FILE_PATH = EVENT_SOURCE_FILE_PATH or get_arg(
-        "event_source_file_path", "A path to a file containing events"
-    )
-    event_str = ""
+def glob_dir_for_json(base_path: Path) -> list:
+    return [el for el in base_path.iterdir() if "json" in el.name]
 
-    if not EVENT_SOURCE_FILE_PATH:
-        EVENT_SOURCE_FILE_PATH = input(
-            "Please enter a path to a file containing events. You may skip this using 's' to enter json in the next step."
-        )
-        if EVENT_SOURCE_FILE_PATH == "s":
-            event_str = input("Please enter a event as a string:")
-    full_path = ""
-    if EVENT_SOURCE_FILE_PATH and not event_str:
-        full_path = Path(EVENT_SOURCE_FILE_PATH).absolute()
-        with open(full_path, "r") as file:
+
+def input_events() -> list:
+    path_for_events = Path(load_config_value("local", "new_event_dir")).absolute()
+
+    all_events = []
+    for file_path_el in glob_dir_for_json(path_for_events):
+        with open(file_path_el, "r") as file:
             event_str = file.read()
+            event_as_dict = _event_from_str(event_str)
 
-    event_as_dict = _event_from_str(event_str)
-    if not event_as_dict:
-        print("Unable to parse the provided option. Please check the input")
-    return _ensure_is_list(event_as_dict)
+            if not event_as_dict:
+                print(
+                    f"Unable to parse the file {file_path_el}. Please check the input."
+                )
+
+            all_events.extend(_ensure_is_list(event_as_dict))
+
+    return all_events
+
+    # event_str = ""
+    # if not event_file:
+    #     # event_from_clipboard = attempt_clipboard_parsing()
+    #     event_from_input = input(
+    #         "Please enter a path to a file containing events. You may skip this using 's' to enter json in the next step."
+    #     )
+    #     if event_from_input == "s":
+    #         event_str = input("Please enter a event as a string:")
+    # full_path = ""
+    # if event_file and not event_str:
+    #     full_path = Path(event_file).absolute()
 
 
-# Todo: Fix this
 def event_is_valid(event_as_dict: dict) -> bool:
-    return "startDate" in event_as_dict.keys()
+    keys = [
+        "name",
+        "description",
+        "url",
+        "streetAddress",
+        "postalCode",
+        "addressLocality",
+        "addressRegion",
+        "addressCountry",
+        "latitude",
+        "longitude",
+        "email",
+        "estimatedCost",
+    ]
+    all_keys_exist = True
+    for key_el in keys:
+        exists = key_el in event_as_dict.keys()
+        all_keys_exist = all_keys_exist and exists
+        if not exists:
+            print(
+                f"{event_as_dict['name']} is missing key {key_el} and will be skipped."
+            )
+    return all_keys_exist
 
 
 def validate_events(events: list):
@@ -261,9 +299,6 @@ def validate_events(events: list):
     return events
 
 
-from datetime import datetime
-
-
 def format_data(data_as_dict, sorted_keys=False):
     return json.dumps(data_as_dict, indent=2, ensure_ascii=False, sort_keys=sorted_keys)
 
@@ -273,9 +308,7 @@ def sort_events(events: list) -> list:
 
 
 def determine_file_target_path(repo_dir: Path) -> Path:
-    from utils.args import EVENT_FILE_PATH_IN_REPO
-
-    return repo_dir.joinpath(Path(EVENT_FILE_PATH_IN_REPO)).absolute()
+    return repo_dir.joinpath(Path("./data/events.json")).absolute()
 
 
 def insert_event_into_file(repo_dir: Path, event_as_dict: dict):
@@ -289,4 +322,17 @@ def insert_event_into_file(repo_dir: Path, event_as_dict: dict):
     with open(full_path, "w") as file:
         file.write(format_data(sorted_events))
 
-    print(full_path, events_from_file)
+
+def remove_dir_pending_confirmation(dir_path: Path):
+    if not dir_path.exists():
+        return
+    user_input_confirmation = input(
+        f"Please confirm the deletion of directory {dir_path} and all its children with y:"
+    )
+    if user_input_confirmation == "y":
+        try:
+            shutil.rmtree(dir_path)
+        except FileNotFoundError:
+            pass
+
+    print(f"The directory {dir_path} has been removed.")

@@ -4,6 +4,8 @@
 artifacts
 *.json
 
+local.config
+
 # Contains secrets
 .env
 !src/next/.env

@@ -12,6 +12,15 @@ mandatory. Current dependencies are:
 
 They can be installed by using "pip [name]".
 
+# How to run
+All of the scripts are intendet to be run from
+the base directory, e.g.:
+
+```python
+ python events/sort.py
+```
+
+
 # Organisation
 The directories 'events' and 'places' contain
 all of the utilities for events and places
