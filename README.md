@@ -41,16 +41,13 @@ As of 2025-10-04, their status is:
 | Places | Check | x |
 | Places | Pipeline| x |
 
-# How to provide args in a way that avoids manual input during execution
 
-It is encouraged to setup a variety args to avoid manual input.
-This can be done in one of two ways: You can edit 'utils/args.py'
-in place. This is easy, but has disadvantages when the package will be
-updated.
-
-The other option is to export these values using environment-variables.
-When you are prompted for a argument, the name of the environment variable
-that is required will be printed.
+# About the config
+This project uses the build-in python config system.
+It consists of a basic config-file. A template
+is provided, its best practice to copy it and 
+provide it to the script with the '--config'
+flag.
 
 # Contributions
 Contributions are very much welcomed, just open an issue and
